@@ -6,9 +6,9 @@ A classic Snake game implemented in Python using the Turtle graphics library. Gu
 - [✨ Features](#-features)
 - [📂 Code Overview](#-code-overview)
   - [main.py](#mainpy)
-  - [snake.py](#snakepy)
-  - [food.py](#foodpy)
-  - [scoreboard.py](#scoreboardpy)
+  - [Snake.py](#snakepy)
+  - [Food.py](#foodpy)
+  - [ScoreBoard.py](#scoreboardpy)
 - [⚙️ Requirements](#️-requirements)
 - [▶️ How to Run](#️-how-to-run)
 - [📄 License](#-license)
@@ -17,8 +17,8 @@ A classic Snake game implemented in Python using the Turtle graphics library. Gu
 - **Snake Movement** - Control the snake's direction using the arrow keys.
 - **Screen Boundaries** - Play within a 600x600 pixel game screen with a sleek black background.
 - **Growth Mechanism** - The snake grows every time it eats food.
-- **Score Tracking** - The scoreboard keeps track of the player’s score.
-- **Game Over Condition** - The game ends if the snake collides with walls or itself.
+- **Score Tracking** - The scoreboard keeps track of the player’s score and highest score.
+- **Game Over Condition** - The game restarts if the snake collides with walls or itself.
 
 ## 📂 Code Overview
 
@@ -67,24 +67,25 @@ while gameIsOn:
 
     # Detect collision with wall
     if snake.head.xcor() > 280 or snake.head.xcor() < -280 or snake.head.ycor() > 280 or snake.head.ycor() < -280:
-        gameIsOn = False
-        score.gameOver()
+        score.reset()
+        snake.reset()
 
     # Detect collision with tail
     for segment in snake.segments[1:]:
         if snake.head.distance(segment) < 10:
-            gameIsOn = False
-            score.gameOver()
+            score.reset()
+            snake.reset()
 
 screen.exitonclick()
 ```
 
 ### Snake.py
 Defines the Snake class, which manages the snake’s attributes and behaviors.
-- Starting Positions: The snake begins with three segments aligned horizontally.
+- Starting Positions: The snake begins with three segments aligned horizontally
 - Movement: Each segment follows the one ahead, allowing the snake to move fluidly.
 - Direction Control: Functions set the snake's direction while preventing it from reversing into itself.
 - Extend Snake: The extend() method adds a segment to the snake each time it eats food.
+- Reset Function: The reset() method clears and recreates the snake, resetting its position.
 ```python
 from turtle import Turtle
 STARTING_POSITIONS = [(0, 0), (-20, 0), (-40, 0)]
@@ -134,12 +135,18 @@ class Snake:
         newSegment.goto(position)
         self.segments.append(newSegment)
 
+    def reset(self):
+        for seg in self.segments:
+            seg.goto(1000, 1000)
+        self.segments.clear()
+        self.createSnake()
+        self.head = self.segments[0]
+
     def extend(self):
-        # add a new seg t the snake
         self.addSegment(self.segments[-1].position())
 ```
 
-### food.py
+### Food.py
 Defines the Food class, which manages the food object.
 - Food Initialization: Generates a small blue circle as food at random positions on the screen.
 - Food Refresh: Moves the food to a new random position each time it's eaten by the snake.
@@ -158,15 +165,15 @@ class Food(Turtle):
         self.refresh()
 
     def refresh(self):
-        randomX = random.randint(-280, 280)
-        randomY = random.randint(-280, 280)
+        randomX = random.randint(-280, 180)
+        randomY = random.randint(-280, 180)
         self.goto(x=randomX, y=randomY)
 ```
 
-### scoreboard.py
+### ScoreBoard.py
 Defines the ScoreBoard class, which tracks and displays the score.
-- Score Tracking: Starts at 0 and increases each time the snake eats food.
-- Game Over: Displays "GAME OVER" at the end of the game.
+- Score Tracking: Starts at 0, increases each time the snake eats food, and saves the highest score in a file.
+- eset and High Score: Tracks the highest score and saves it to a file.
 ```python
 from turtle import Turtle
 
@@ -177,6 +184,8 @@ class ScoreBoard(Turtle):
     def __init__(self):
         super().__init__()
         self.score = 0
+        with open("data.txt") as data:
+            self.highScore = int(data.read())
         self.color("white")
         self.penup()
         self.goto(0, 265)
@@ -184,11 +193,20 @@ class ScoreBoard(Turtle):
         self.updateScoreBoard()
 
     def updateScoreBoard(self):
-        self.write(f"Score: {self.score}", align=ALIGNMENT, font=FONT)
+        self.clear()
+        self.write(f"Score: {self.score} High Score: {self.highScore}", align=ALIGNMENT, font=FONT)
 
-    def gameOver(self):
-        self.goto(0, 0)
-        self.write(f"GAME OVER", align=ALIGNMENT, font=FONT)
+    def reset(self):
+        if self.score > self.highScore:
+            self.highScore = self.score
+            with open("data.txt", mode="w") as data:
+                data.write(f"{self.highScore}")
+        self.score = 0
+        self.updateScoreBoard()
+
+    def increaseScore(self):
+        self.score += 1
+        self.updateScoreBoard()
 ```
 
 ## ⚙️ Requirements
@@ -209,3 +227,4 @@ This project is open-source and available under the MIT License.
 
 
 Enjoy playing the classic Snake game in Python! 🐍✨
+
